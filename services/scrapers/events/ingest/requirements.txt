@@ -1,0 +1,5 @@
+requests
+pydantic
+requests-cache
+google-cloud-storage
+google-cloud-pubsub

@@ -1,0 +1,20 @@
+LOAD DATABASE
+    FROM 'events.db'
+    INTO ENV 'DATABASE_URL'
+
+WITH
+    -- This option drops the target table if it exists, then re-creates it from the source schema.
+    include drop,
+    create tables,
+    -- This ensures data is fresh if the table already exists.
+    truncate
+
+CAST
+    -- Assuming startDate and endDate are stored as text in SQLite that pgloader can parse.
+    column "startDate" to "timestamptz",
+    column "endDate" to "timestamptz",
+
+    -- Assuming lat and long are stored as text or numeric in SQLite.
+    column "lat" to "float",
+    column "long" to "float"
+;

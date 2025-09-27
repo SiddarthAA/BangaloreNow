@@ -1,41 +1,18 @@
-# Stage 1: Builder
-FROM python:3.11-slim as builder
+FROM python:3.12-slim
 
-# Install uv
-RUN pip install uv
-
-# Create a virtual environment
-ENV VIRTUAL_ENV=/opt/venv
-RUN python3 -m venv $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-
-# Copy and install Python dependencies
-COPY requirements.txt .
-RUN uv pip install --no-cache -r requirements.txt
-
-# Stage 2: Final Image
-FROM python:3.11-slim
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    pgloader \
-    && rm -rf /var/lib/apt/lists/*
-
+# Set the working directory in the container
 WORKDIR /app
 
-# Copy the virtual environment from the builder stage
-COPY --from=builder /opt/venv /opt/venv
+# Create a non-root user
+RUN useradd --create-home appuser
+USER appuser
 
-# Copy only the necessary application code
-COPY base_filter.py .
-COPY run.sh .
-COPY utils/ ./utils/
-COPY .env .
-COPY load.load .
+# Copy the requirements file and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Make the run script executable
-RUN chmod +x run.sh
+# Copy the application code
+COPY . .
 
-# Set the entrypoint to the run script
-ENV PATH="/opt/venv/bin:$PATH"
-ENTRYPOINT ["./run.sh"]
+# Command to run the application
+CMD ["python", "main_filter.py"]

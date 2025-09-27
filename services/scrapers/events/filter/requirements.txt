@@ -1,9 +1,7 @@
---extra-index-url https://download.pytorch.org/whl/cpu
-torch
-sentence-transformers
-google-genai
-google-cloud-storage
 python-dotenv
 requests
-faiss-cpu
-numpy
+pandas
+psycopg2-binary
+google-genai
+google-cloud-storage
+supabase

@@ -28,20 +28,13 @@ logger = Logger("blrnow : ingest")
 import requests
 import subprocess
 
-from google.cloud import storage, pubsub_v1
+from google.cloud import storage
 from base_filter import filter_database
 
-BUCKET_NAME = "blrnow-bucket"
+BUCKET_NAME = "blrnowbucket"
 LATEST_FILE = "latest.txt"
 EVENTS_DB = "events.db"
 GITHUB_RELEASE_URL = "https://github.com/blr-today/dataset/releases/latest/download/events.db"
-
-def trigger_sub(): 
-    publisher = pubsub_v1.PublisherClient()
-    topic_path = publisher.topic_path("bengalurunow","blrnow-trigger")
-    future = publisher.publish(topic_path,b"")
-    future.result()
-    logger.info("Triggered Downstream Filter2 Via Pub-Sub")
 
 def get_latest_tag_from_github():
     try:
@@ -87,7 +80,7 @@ def main():
 
     if github_tag == bucket_tag:
         logger.info("No New Release Found - Exiting")
-        return "No update needed"
+        return False
 
     logger.info("Downloading Latest 'events.db' From GitHub")
     r = requests.get(GITHUB_RELEASE_URL, allow_redirects=True)
@@ -101,9 +94,8 @@ def main():
 
     update_bucket(github_tag)
 
-    trigger_sub()
     logger.info("Execution complete")
-    return "Updated events.db"
+    return True
 
 if __name__ == "__main__": 
     main()

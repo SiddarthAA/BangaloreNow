@@ -44,12 +44,12 @@ def filter_database():
         description TEXT,
         url TEXT,
         image TEXT,
-        startDate TEXT,
-        endDate TEXT,
+        startDate DATETIME,
+        endDate DATETIME,
         venue TEXT,
         address TEXT,
-        lat TEXT,
-        long TEXT,
+        lat REAL,
+        long REAL,
         organizer TEXT
     )
     ''')
@@ -59,6 +59,7 @@ def filter_database():
     now = datetime.now()
     current_month = now.month
     current_year = now.year
+    processed_names = set()
 
     for row in rows:
         try:
@@ -66,58 +67,77 @@ def filter_database():
         except json.JSONDecodeError:
             continue
 
-        startDate = event_json.get('startDate')
-        if startDate:
+        startDate_str = event_json.get('startDate')
+        if startDate_str:
             try:
-                event_date_str = startDate.split('+')[0]
-                event_date = datetime.fromisoformat(event_date_str)
+                event_date_str = startDate_str.split('+')[0]
+                startDate = datetime.fromisoformat(event_date_str)
                 
-                if event_date.year == current_year and event_date.month == current_month:
-                    endDate = event_json.get('endDate')
-                    if not endDate:
+                if startDate.year == current_year and startDate.month == current_month and startDate.date() >= now.date():
+                    endDate_str = event_json.get('endDate')
+                    if not endDate_str:
                         endDate = startDate
+                    else:
+                        endDate = datetime.fromisoformat(endDate_str.split('+')[0])
+
 
                     name = event_json.get('name')
-                    description = event_json.get('description')
-                    url = event_json.get('url')
-                    image_data = event_json.get('image')
-                    if isinstance(image_data, list):
-                        if image_data:
-                            image = image_data[0]
+                    if name and name not in processed_names:
+                        processed_names.add(name)
+                        description = event_json.get('description')
+                        url = event_json.get('url')
+                        image_data = event_json.get('image')
+                        if isinstance(image_data, list):
+                            if image_data:
+                                image = image_data[0]
+                            else:
+                                image = None
                         else:
-                            image = None
-                    else:
-                        image = image_data
+                            image = image_data
 
-                    location = event_json.get('location', {})
-                    venue = location.get('name') if isinstance(location, dict) else None
-                    
-                    address_parts = []
-                    if isinstance(location, dict):
-                        address_obj = location.get('address', {})
-                        if isinstance(address_obj, dict):
-                            address_parts.append(address_obj.get('streetAddress', ''))
-                            address_parts.append(address_obj.get('addressLocality', ''))
-                            address_parts.append(address_obj.get('addressRegion', ''))
-                            address_parts.append(address_obj.get('postalCode', ''))
-                            address_parts.append(address_obj.get('addressCountry', ''))
-                        elif isinstance(address_obj, str):
-                            address_parts.append(address_obj)
-                    
-                    address = ', '.join(filter(None, address_parts))
+                        location = event_json.get('location', {})
+                        venue = location.get('name') if isinstance(location, dict) else None
+                        
+                        address_parts = []
+                        if isinstance(location, dict):
+                            address_obj = location.get('address', {})
+                            if isinstance(address_obj, dict):
+                                address_parts.append(address_obj.get('streetAddress', ''))
+                                address_parts.append(address_obj.get('addressLocality', ''))
+                                address_parts.append(address_obj.get('addressRegion', ''))
+                                address_parts.append(address_obj.get('postalCode', ''))
+                                address_parts.append(address_obj.get('addressCountry', ''))
+                            elif isinstance(address_obj, str):
+                                address_parts.append(address_obj)
+                        
+                        address = ', '.join(filter(None, address_parts))
 
 
-                    geo = location.get('geo', {}) if isinstance(location, dict) else {}
-                    lat = geo.get('latitude') if isinstance(geo, dict) else None
-                    long = geo.get('longitude') if isinstance(geo, dict) else None
+                        geo = location.get('geo', {}) if isinstance(location, dict) else {}
+                        lat_str = geo.get('latitude') if isinstance(geo, dict) else None
+                        long_str = geo.get('longitude') if isinstance(geo, dict) else None
+                        
+                        lat = None
+                        if lat_str:
+                            try:
+                                lat = float(lat_str)
+                            except (ValueError, TypeError):
+                                lat = None
 
-                    organizer_obj = event_json.get('organizer', {})
-                    organizer = organizer_obj.get('name') if isinstance(organizer_obj, dict) else None
+                        long = None
+                        if long_str:
+                            try:
+                                long = float(long_str)
+                            except (ValueError, TypeError):
+                                long = None
 
-                    cursor.execute('''
-                    INSERT INTO events_temp (name, description, url, image, startDate, endDate, venue, address, lat, long, organizer)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', (name, description, url, image, startDate, endDate, venue, address, lat, long, organizer))
+                        organizer_obj = event_json.get('organizer', {})
+                        organizer = organizer_obj.get('name') if isinstance(organizer_obj, dict) else None
+
+                        cursor.execute('''
+                        INSERT INTO events_temp (name, description, url, image, startDate, endDate, venue, address, lat, long, organizer)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ''', (name, description, url, image, startDate, endDate, venue, address, lat, long, organizer))
 
             except (ValueError, TypeError) as e:
                 logger.warning("Skipping Event Due To Data Error")

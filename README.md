@@ -11,7 +11,7 @@
 We are building the definitive, real-time dashboard for Bangalore.
 Not another scattered blog, not another walled app — but a single, living system for everything that matters in this city.
 
-🔗 Visit: [https://bangalorenow.live](https://bangalorenow.live)
+🔗 Visit: [https://bangalore-now-ospi-26.vercel.app](https://bangalore-now-ospi-26.vercel.app)
 
 ---
 
@@ -137,6 +137,5 @@ This ensures the revolution cannot be privatized, sold off, or closed down.
 
 # Know your city. Own your city. Build its future.
 
-[https://bangalorenow.live](https://bangalorenow.live)
 
 </div>  

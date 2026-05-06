@@ -1,4 +1,0 @@
-requests
-pydantic
-requests-cache
-google-cloud-storage

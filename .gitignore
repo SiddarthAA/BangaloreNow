@@ -1,2 +1,2 @@
-/venv
-/services/scrapers/events/filter/.env
+#ignore virtual environment
+.venv/

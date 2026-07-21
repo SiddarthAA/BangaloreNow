@@ -36,9 +36,9 @@ Source validation (Tier-1 = plain httpx works):
 |---|---|
 | Eventbrite, Luma, Allevents | Tier-1 full (JSON-LD + geo) |
 | Meetup | Tier-1 + **geocode** (good addresses, no coords) |
-| 10times | anti-bot (403) → Tier-2/3 |
-| Townscript | SPA shell → browser / its JSON API |
-| Hasgeek | homepage isn't a listing; find the real event URLs |
+| 10times | Tier-1 + **geocode** — city URL moved to `/bengaluru-in/technology` (re-validated 2026-07; old path soft-404s, was never anti-bot) |
+| Townscript | SPA; no JSON-LD even browser-rendered; its JSON API 401s without app token → adapter or skip |
+| Hasgeek | fetches fine, zero Event JSON-LD → needs small custom parser |
 
 Real pipeline (not built yet): discover → fetch(tier) → parse JSON-LD → normalize →
 geocode → classify tech-vs-not (Claude Haiku) → dedup (`rapidfuzz`) → upsert Postgres.

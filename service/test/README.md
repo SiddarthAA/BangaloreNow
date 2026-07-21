@@ -98,17 +98,35 @@ code. The expensive tools are fallbacks, not the default.
 | Luma | ✅ | JSON-LD **+ geo** (also `__NEXT_DATA__`) | 20 | ✅ direct | **Tier-1 full** |
 | Allevents | ✅ | JSON-LD **+ geo** | 15 | ✅ direct | **Tier-1 full** |
 | Meetup | ✅ | JSON-LD, full street address, **no geo** | 30 | ⚠️ geocode | **Tier-1 + geocode** |
-| Hasgeek | ✅ | only `WebSite`/`Organization` on homepage | — | — | inconclusive (homepage ≠ listing; needs project URLs) |
-| 10times | ❌ | HTTP **403** anti-bot | — | — | **Tier-2/3** (browser/managed) |
+| Hasgeek | ✅ | no `Event` JSON-LD anywhere (homepage *or* project pages) | — | — | Tier-1 fetch + **custom parser** |
+| 10times | ✅ | JSON-LD, **no geo** (city page moved to `/bengaluru-in/`) | 10 | ⚠️ geocode | **Tier-1 + geocode** |
 | Townscript | ✅ | 5KB SPA shell, hydrates via JS/API | 0 | — | **Tier-2 / its JSON API** |
 
 Takeaways:
 - **3 of 7 are fully Tier-1 with coordinates** out of the box (plus Eventbrite = 4).
-- **Meetup** is Tier-1 for discovery + all fields *except* coordinates → it needs a
-  **geocoding step** on its (high-quality) addresses, not a browser.
-- Escalation is the exception, and each kind is distinct: anti-bot (10times → browser/
-  Firecrawl), SPA (Townscript → render or call its API), wrong-URL (Hasgeek → find the
-  real listing endpoint). Confirms the tiered design below.
+- **Meetup and 10times** are Tier-1 for discovery + all fields *except* coordinates →
+  they need a **geocoding step** on their addresses, not a browser.
+- Escalation is the exception, and each kind is distinct: SPA (Townscript → its JSON
+  API; browser-rendered DOM has no JSON-LD either, and the API 401s without an app
+  token), no-structured-data (Hasgeek → small custom parser), and plain **source rot**
+  (10times "block" was actually a moved URL). Confirms the tiered design below — and
+  the per-source yield alerting in §9.
+
+### Re-validation (2026-07-12)
+
+Live re-run of `run.py` + `validate_tier1.py` reproduced the bake-off exactly
+(custom 100% / 1.8s; crawl4ai 100% / 2.6s; firecrawl again fabricated `(0,0)`
+for all 7 events and dropped end_date/address/description). Two verdicts moved:
+
+- **10times**: the 2026-06 `403` became a soft-404 — the city page moved to
+  `10times.com/bengaluru-in/technology`. The *new* URL is plain-httpx friendly:
+  10 JSON-LD events, real conferences, no coords → reclassified **Tier-1 + geocode**.
+  Not anti-bot after all; just URL churn.
+- **Hasgeek**: fetches fine (homepage, `/fifthelephant`, `?past=1`) but emits zero
+  `schema.org/Event` markup → needs a per-source `parse()` override, not a browser.
+- **Townscript**: even rendered in Chromium there's no `Event` JSON-LD in the DOM;
+  its `api/customsearch/events` returns 401 without an app token → adapter that
+  mimics the app's API bootstrap, or skip for beta.
 
 ## Handling many sites: architecture
 

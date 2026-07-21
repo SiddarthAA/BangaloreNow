@@ -28,7 +28,8 @@ SITES = [
     ("Meetup (find tech)", "https://www.meetup.com/find/?keywords=technology&location=in--Bangalore&source=EVENTS"),
     ("Hasgeek",            "https://hasgeek.com/"),
     ("Allevents (tech)",   "https://allevents.in/bangalore/technology"),
-    ("10times (tech)",     "https://10times.com/bangalore/technology"),
+    # 10times moved city pages to /<city>-in/ (old /bangalore/technology soft-404s since ~2026-07)
+    ("10times (tech)",     "https://10times.com/bengaluru-in/technology"),
     ("Townscript (city)",  "https://www.townscript.com/discover/all-events/bangalore"),
 ]
 
